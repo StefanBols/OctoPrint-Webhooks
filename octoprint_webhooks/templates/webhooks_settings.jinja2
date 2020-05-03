@@ -1,18 +1,143 @@
+{% assets "js_client" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+<script src="{{ url_for("static", filename="js/lib/jquery/jquery.min.js") }}"></script>
+<script src="{{ url_for("static", filename="js/lib/lodash.min.js") }}"></script>
+
 <h2>Webhook Settings</h2>
 <form class="form-horizontal">
     <div class="control-group">
+        <!-- ---------- -->
+        <!-- ---------- -->
+        <!-- EVENT LIST -->
+        <!-- ---------- -->
+        <!-- ---------- -->
+        <h4 class="control-header" style="margin-bottom:20px">Events</h4>
+        <div class="control-header-description">
+            Select the events for which you want webhooks sent.
+        </div>
+        <div class="control-group-event">
+            <label class="control-label">{{ _('PRINT STARTED') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintStarted">
+                <span class="control-description2">
+                    This is called when a print is started.
+                </span>
+            </div>
+        </div>
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('PRINT DONE') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintDone">
+                <span class="control-description2">
+                    This is called when a print has finished.
+                </span>
+            </div>
+        </div>
+
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('PRINT FAILED') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintFailed">
+                <span class="control-description2">
+                    This is called when a print has failed.
+                </span>
+            </div>
+        </div>
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('PRINT PAUSED') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintPaused">
+                <span class="control-description2">
+                    This is called when a print has been paused.
+                </span>
+            </div>
+        </div>
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('USER ACTION NEEDED') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventUserActionNeeded">
+                <span class="control-description2">
+                    This is called when user action is needed.
+                    Can be used with a Prusa printer when a color change is necessary.
+                </span>
+            </div>
+        </div>
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('ERROR') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventError">
+                <span class="control-description2">
+                    This is called when some error has occurred. Can occur due to server troubles, plugins, ...
+                </span>
+            </div>
+        </div>
+
+        <div class="control-group-event">
+            <label class="control-label">{{ _('PRINT PROGRESS') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.event_print_progress">
+                <span class="control-description2">
+                    This is called when print progress milestones are reached.
+                </span>
+                <div id="progress-container" data-bind="css: { 'progressBlock': settings.settings.plugins.webhooks.event_print_progress(), 'progressHidden': !settings.settings.plugins.webhooks.event_print_progress()}">
+                    <input type="number" class="input-block-level" data-bind="value: settings.settings.plugins.webhooks.event_print_progress_interval">
+                    <div class="control-description2">
+                        Set the interval you want to receive print progress webhooks.
+                        <br/>
+                        Setting the progress to 10 will send a webhook at 10%, 20%, 30%, ...
+                        <br/>
+                        Do NOT put a percent sign in the box. Put 10 instead of 10%.
+                        <br/>
+                        Note that 0% and 100% events are not triggered - use PRINT STARTED and PRINT FINISHED for those.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ------------------ -->
         <!-- ------------------ -->
         <!-- WEBHOOK PARAMETERS -->
         <!-- ------------------ -->
         <!-- ------------------ -->
         <h4 class="control-header">Webhook Parameters</h4>
+        <div class="control-header-description">
+            Every time an event occurs, an API request (webhook) will be sent to the URL you provide.
+        </div>
         <label class="control-label">{{ _('URL') }}</label>
         <div class="controls">
             <input type="text" class="input-block-level" data-bind="value: settings.settings.plugins.webhooks.url">
         </div>
         <div class="control-description">
             This URL will be called whenever one of the enabled events below is triggered.
+        </div>
+
+        <label class="control-label">{{ _('HTTP METHOD') }}</label>
+        <div class="controls">
+            <select id="selectHTTPMethod" class="control-select" data-bind="value: settings.settings.plugins.webhooks.http_method">
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="GET">GET</option>
+            </select>
+        </div>
+        <div class="control-description">
+            The type of HTTP request to make.
+        </div>
+
+        <label class="control-label">{{ _('CONTENT TYPE') }}</label>
+        <div class="controls">
+            <select id="selectHTTPMethod" class="control-select" data-bind="value: settings.settings.plugins.webhooks.content_type">
+                <option value="JSON">JSON</option>
+                <option value="FORM">x-www-form-urlencoded</option>
+            </select>
+        </div>
+        <div class="control-description">
+            How to encode the data before sending. The header for 'Content-Type' will be overridden if necessary
+            to support this content type.
         </div>
 
         <label class="control-label">{{ _('API SECRET') }}</label>
@@ -33,82 +158,20 @@
             help you distinguish between them. Something like 'Printer1' should work.
         </div>
 
-        <!-- ---------- -->
-        <!-- ---------- -->
-        <!-- EVENT LIST -->
-        <!-- ---------- -->
-        <!-- ---------- -->
-        <h4 class="control-header" style="margin-bottom:20px">Events</h4>
-
-        <div class="control-group">
-            <label class="control-label">{{ _('PRINT STARTED') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintStarted">
-                <span class="control-description2">
-                    This is called when a print is started.
-                </span>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label">{{ _('PRINT DONE') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintDone">
-                <span class="control-description2">
-                    This is called when a print has finished.
-                </span>
-            </div>
-        </div>
-
-
-        <div class="control-group">
-            <label class="control-label">{{ _('PRINT FAILED') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintFailed">
-                <span class="control-description2">
-                    This is called when a print has failed.
-                </span>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label">{{ _('PRINT PAUSED') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventPrintPaused">
-                <span class="control-description2">
-                    This is called when a print has been paused.
-                </span>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label">{{ _('USER ACTION NEEDED') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventUserActionNeeded">
-                <span class="control-description2">
-                    This is called when user action is needed.
-                    Can be used with a Prusa printer when a color change is necessary.
-                </span>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label">{{ _('ERROR') }}</label>
-            <div class="controls">
-                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.eventError">
-                <span class="control-description2">
-                    This is called when some error has occurred. Can occur due to server troubles, plugins, ...
-                </span>
-            </div>
-        </div>
-
         <!-- -------- -->
         <!-- -------- -->
         <!-- ADVANCED -->
         <!-- -------- -->
         <!-- -------- -->
-        <h4 class="control-header" style="margin-bottom:20px">Advanced</h4>
-
+        <h4 class="control-header">Advanced</h4>
+        <div class="control-header-description">
+            The advanced parameters allow you to format the Headers and Data that are sent in your webhook.
+            You can use @param to insert variables into the JSON.
+            For instance, if above you set 'DEVICE IDENTIFIER' to "Blane's Printer", then @deviceIdentifer
+            will get replaced with "Blane's Printer" when the webhook request is made.
+            For a list of all possible parameters, see the
+            <a target="_blank" href="https://github.com/2blane/OctoPrint-Webhooks#advanced-configuration">README</a>.
+        </div>
         <label class="control-label">{{ _('HEADERS') }}</label>
         <div class="controls">
             <button type="button" class="input-button" data-bind="click: resetHeadersToDefaults">Reset to Defaults</button>
@@ -116,10 +179,7 @@
             </textarea>
         </div>
         <div class="control-description">
-            Provide a JSON dictionary of parameters that will be passed along with each request. Use @param to insert
-            variables into the JSON. See the
-            <a target="_blank" href="https://github.com/2blane/OctoPrint-Webhooks#advanced-configuration">README</a>
-            for more details.
+            Provide a JSON dictionary of headers that will be passed along with each request.
         </div>
 
         <label class="control-label">{{ _('DATA') }}</label>
@@ -129,10 +189,123 @@
             </textarea>
         </div>
         <div class="control-description">
-            Provide a JSON dictionary of parameters that will be passed along with each request. Use @param to insert
-            variables into the JSON. See the
-            <a target="_blank" href="https://github.com/2blane/OctoPrint-Webhooks#advanced-configuration">README</a>
-            for more details.
+            Provide a JSON dictionary of parameters that will be passed along with each request.
+        </div>
+
+
+        <!-- ----- -->
+        <!-- ----- -->
+        <!-- OAUTH -->
+        <!-- ----- -->
+        <!-- ----- -->
+        <h4 class="control-header">OAuth</h4>
+        <div class="control-header-description">
+            OAuth is a common authentication mechanism used by many APIs. If your server requires you to first make an
+            API call trading credentials for tokens so that you can use those tokens in your API request then OAuth
+            should be enabled. You can then access the properties of the OAuth response using something like @access_token
+            in the DATA and HEADER settings above.
+        </div>
+        <div class="control-group">
+            <label class="control-label">{{ _('OAUTH ENABLED') }}</label>
+            <div class="controls">
+                <input type="checkbox" data-bind="checked: settings.settings.plugins.webhooks.oauth">
+                <span class="control-description2">
+                    If enabled, will first make an OAuth call to get credentials, and will then call the webhook.
+                </span>
+            </div>
+        </div>
+
+        <div id="oauth-container" data-bind="css: { 'oAuthContainerBlock': settings.settings.plugins.webhooks.oauth(), 'oAuthContainer': !settings.settings.plugins.webhooks.oauth()}">
+            <!-- OAuth URL -->
+            <label class="control-label">{{ _('OAUTH URL') }}</label>
+            <div class="controls">
+                <input type="text" class="input-block-level" data-bind="value: settings.settings.plugins.webhooks.oauth_url">
+            </div>
+            <div class="control-description">
+                The URL to your OAuth Endpoint. This will be called first to trade credentials for an access token.
+            </div>
+
+            <!-- OAuth HTTP Method -->
+            <label class="control-label">{{ _('OAUTH HTTP METHOD') }}</label>
+            <div class="controls">
+                <select id="selectHTTPMethod" class="control-select" data-bind="value: settings.settings.plugins.webhooks.oauth_http_method">
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="GET">GET</option>
+                </select>
+            </div>
+            <div class="control-description">
+                The type of HTTP request to make.
+            </div>
+
+            <!-- OAuth HTTP Content Type -->
+            <label class="control-label">{{ _('OAUTH CONTENT TYPE') }}</label>
+            <div class="controls">
+                <select id="selectHTTPMethod" class="control-select" data-bind="value: settings.settings.plugins.webhooks.oauth_content_type">
+                    <option value="JSON">JSON</option>
+                    <option value="FORM">x-www-form-urlencoded</option>
+                </select>
+            </div>
+            <div class="control-description">
+                How to encode the data before sending. The header for 'Content-Type' will be overridden if necessary
+                to support this content type.
+            </div>
+
+            <!-- OAuth Headers -->
+            <label class="control-label">{{ _('OAUTH HEADERS') }}</label>
+            <div class="controls">
+                <button type="button" class="input-button" data-bind="click: resetOAuthHeadersToDefaults">Reset to Defaults</button>
+                <textarea class="input-block-level" rows="3" data-bind="value: settings.settings.plugins.webhooks.oauth_headers">
+                </textarea>
+            </div>
+            <div class="control-description">
+                Provide a JSON dictionary of headers that will be passed along with each request.
+                NOTE: @param doesn't work here.
+            </div>
+
+            <!-- OAuth Data -->
+            <label class="control-label">{{ _('OAUTH DATA') }}</label>
+            <div class="controls">
+                <button type="button" class="input-button" data-bind="click: resetOAuthDataToDefaults">Reset to Defaults</button>
+                <textarea class="input-block-level" rows="7" data-bind="value: settings.settings.plugins.webhooks.oauth_data">
+                </textarea>
+            </div>
+            <div class="control-description">
+                Provide a JSON dictionary of parameters that will be passed along with each request.
+                NOTE: @param doesn't work here.
+            </div>
+        </div>
+
+        <!-- ------------ -->
+        <!-- ------------ -->
+        <!-- TEST WEBHOOK -->
+        <!-- ------------ -->
+        <!-- ------------ -->
+        <h4 class="control-header">Testing</h4>
+        <div class="control-header-description">
+            Send test events to your server to make sure everything is configured correctly.
+            <br/>
+            Note: if a popup appears telling you "Settings update detected", you can choose either option and ignore it.
+        </div>
+        <div class="control-group">
+            <label class="control-label">{{ _('TEST EVENT') }}</label>
+            <div class="controls">
+                <select id="selectTestEvent" class="control-select" data-bind="value: settings.settings.plugins.webhooks.test_event">
+                    <option value="PrintStarted">Print Started</option>
+                    <option value="PrintDone">Print Done</option>
+                    <option value="PrintFailed">Print Failed</option>
+                    <option value="PrintPaused">Print Paused</option>
+                    <option value="plugin_webhooks_notify">User Action Needed</option>
+                    <option value="Error">Error</option>
+                    <option value="plugin_webhooks_progress">Print Progress</option>
+                </select>
+                <span class="control-description2">
+                    The event you want to simulate.
+                </span>
+                <br/>
+                <button type="button" class="input-button" data-bind="click: testWebhook" style="margin-top:10px;">Send Test Webhook</button>
+            </div>
         </div>
     </div>
 </form>
